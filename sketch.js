@@ -1,6 +1,6 @@
 var database;
 var add_raw_mat,add_made_mat,check_stock,no_of_rows,set;
-var state=1;
+var state=0;
 var raw_mat_form=[];
 
 function setup() {
@@ -37,7 +37,7 @@ function setup() {
   set = createButton("Set");
   set.position(525,70);
   
-  no_of_rows = createInput("9","number");
+  no_of_rows = createInput("0","number");
   no_of_rows.position(325,70);
 }
 
@@ -68,11 +68,6 @@ function draw() {
 
   if(state==2) {
     text("Enter the of Fabric to be Added",20,87.5);
-    // fabric.hide();
-    // lot_number.hide();
-    // colour_chart.hide();
-    // rate.hide();
-    // cut.hide();
     text("Fabric",20,140);
     text("Lot Number",220,140);
     text("Colour Chart",420,140);
@@ -90,10 +85,18 @@ function draw() {
           base_rate:quantity*raw_mat_form[i][3].value()
         });
       }
+      raw_mat_form=[];
+      no_of_rows.value(0);
+      set.position(525,70);
+      state=0;
     })
   }
 
   if(state==3) {
+
+  }
+
+  if(state==4) {
 
   }
 
