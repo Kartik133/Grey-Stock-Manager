@@ -58,6 +58,7 @@ function draw() {
 
   if(state==1) {
     no_of_rows.show();
+    set.show();
     text("Enter the of Fabric to be Added",20,87.5);
     set.mouseReleased(()=>{
       no_of_rows.attribute("disabled",""); 
