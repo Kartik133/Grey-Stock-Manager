@@ -4,7 +4,7 @@ var state=0;
 var raw_mat_form=[],mat_made_form=[],lot_numbers=[];
 
 function setup() {
-  createCanvas(displayWidth,displayHeight);
+  createCanvas(displayWidth*2,displayHeight);
 
   database = firebase.database();
 
@@ -75,7 +75,7 @@ function setup() {
         database.ref("lot_numbers/"+mat_made_form[i][0].value()).update({
           quantity_made:temp+Number(mat_made_form[i][2].value())
         });
-        database.ref("lot_numbers/"+mat_made_form[i][0].value()+"/design_numbers/").set({
+        database.ref("lot_numbers/"+mat_made_form[i][0].value()+"/design_numbers/").update({
           [mat_made_form[i][1].value()]:[mat_made_form[i][3].value(),mat_made_form[i][4].value(),mat_made_form[i][2].value()]
         });
       }
@@ -155,7 +155,7 @@ function draw() {
     text("Cut",600,100);
     text("Base Rate",700,100);
     text("Colour Chart",850,100);
-    text("Design Number and Details",1200,100);
+    text("Design Number and Details [Design Number,Job Rate,Packing Rate,Piece Made]",1200,100);
 
     for(let i=0;i<lot_numbers.length;i++) {
       text(lot_numbers[i][1],20,150+i*50);
@@ -167,7 +167,7 @@ function draw() {
       text(lot_numbers[i][6],700,150+i*50);
       text(lot_numbers[i][7],850,150+i*50);
       for(let j=0;j<lot_numbers[i][8].length;j++) {
-        text(lot_numbers[i][8][j],1200+100*j,150+i*50);
+        text(lot_numbers[i][8][j],1200+200*j,150+i*50);
       }
     }
   }
