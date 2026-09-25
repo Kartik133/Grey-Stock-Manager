@@ -1,7 +1,7 @@
 var database;
 var add_raw_mat,add_made_mat,check_stock,no_of_rows,set;
 var state=0;
-var raw_mat_form=[],mat_made_form=[];
+var raw_mat_form=[],mat_made_form=[],lot_numbers=[];
 
 function setup() {
   createCanvas(displayWidth,displayHeight);
@@ -141,10 +141,36 @@ function draw() {
     text("Packing Rate",820,140);
   }
 
-  // if(state==5) {
-  //   getCompleteTree();
-  //   state=6;
-  // }
+  if(state==5) {
+    loadLotNumbers();
+    state=6;
+  }
+
+  if(state==6) {
+    text("Fabric",20,100);
+    text("L.N.",200,100);
+    text("Quantity",300,100)
+    text("Q.M.",400,100);
+    text("Rate",500,100);
+    text("Cut",600,100);
+    text("Base Rate",700,100);
+    text("Colour Chart",850,100);
+    text("Design Number and Details",1200,100);
+
+    for(let i=0;i<lot_numbers.length;i++) {
+      text(lot_numbers[i][1],20,150+i*50);
+      text(lot_numbers[i][0],200,150+i*50);
+      text(lot_numbers[i][2],300,150+i*50);
+      text(lot_numbers[i][3],400,150+i*50);
+      text(lot_numbers[i][4],500,150+i*50);
+      text(lot_numbers[i][5],600,150+i*50);
+      text(lot_numbers[i][6],700,150+i*50);
+      text(lot_numbers[i][7],850,150+i*50);
+      for(let j=0;j<lot_numbers[i][8].length;j++) {
+        text(lot_numbers[i][8][j],1200+100*j,150+i*50);
+      }
+    }
+  }
 }
 
 function createForm() {
@@ -210,32 +236,44 @@ async function loadData(a) {
   return Number(data.val()) || 0;
 }
 
-// async function getCompleteTree() {
+async function loadLotNumbers() {
 
-//   let snapshot = await database.ref("lot_numbers").once("value");
+  let snapshot = await database.ref("lot_numbers").once("value");
 
-//   function readTree(snapshot, level = 0) {
+  lot_numbers = [];
 
-//     let spaces = "  ".repeat(level);
+  snapshot.forEach((lot) => {
 
-//     snapshot.forEach((child) => {
+    let data = lot.val();
 
-//       if (child.hasChildren()) {
+    let designs = [];
 
-//         console.log(spaces + child.key + ":");
+    if (data.design_numbers != null) {
 
-//         readTree(child, level + 1);
+      for (let design_number in data.design_numbers) {
 
-//       } else {
+        let design_data = data.design_numbers[design_number];
 
-//         console.log(
-//           spaces + child.key + ": " + child.val()
-//         );
+        designs.push([
+          (design_number),
+          (design_data[0]),
+          (design_data[1]),
+          (design_data[2])
+        ]);
 
-//       }
+      }
+    }
 
-//     });
-//   }
-
-//   readTree(snapshot);
-// }
+    lot_numbers.push([
+      (lot.key),
+      data.fabric,
+      (data.quantity),
+      (data.quantity_made),
+      (data.rate),
+      (data.cut),
+      (data.base_rate),
+      data.colour_chart,
+      designs
+    ]);
+  });
+}
