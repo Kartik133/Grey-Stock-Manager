@@ -1,16 +1,12 @@
 var database;
 var add_raw_mat,add_made_mat,check_stock,no_of_rows,set;
 var state=0;
-var raw_mat_form=[];
+var raw_mat_form=[],mat_made_form=[];
 
 function setup() {
   createCanvas(displayWidth,displayHeight);
 
   database = firebase.database();
-  
-  // database.ref("cutCount").on("value",(data)=> {
-  //   cutCount = data.val();
-  // });
 
   textSize(20);
   noStroke();
@@ -31,14 +27,73 @@ function setup() {
   check_stock = createButton("Check Stock");
   check_stock.position(displayWidth/2-100,displayHeight/2+50);
   check_stock.mouseReleased(()=>{
-    state=4;
+    state=5;
   })
 
   set = createButton("Set");
-  set.position(525,70);
+  set.position(625,70);
+  set.mouseReleased(async ()=>{
+    if(state==1) {
+      no_of_rows.attribute("disabled",""); 
+      createForm();
+      state=2;
+    }else if(state==2) {
+      for(let i=0;i<no_of_rows.value();i++) {
+        let arr = raw_mat_form[i][2].value().split(",").map(Number);
+        let quantity = 0;
+        for(let k=1;k<arr.length;k+=2) {
+          quantity+=arr[k];
+        }
+        database.ref("lot_numbers/"+raw_mat_form[i][1].value()).set({
+          fabric:raw_mat_form[i][0].value(),
+          colour_chart:raw_mat_form[i][2].value(),
+          rate:raw_mat_form[i][3].value(),
+          cut:raw_mat_form[i][4].value(),
+          quantity:quantity,
+          base_rate:raw_mat_form[i][4].value()*raw_mat_form[i][3].value(),
+          quantity_made:0,
+          design_number:null
+        });
+      }
+      for(let i=0;i<no_of_rows.value();i++) {
+        for(let j=0;j<5;j++) {
+          raw_mat_form[i][j].hide();
+        }
+      }
+      raw_mat_form=[];
+      no_of_rows.value(0);
+      set.position(625,70);
+      no_of_rows.removeAttribute("disabled");
+      state=0;
+    }else if(state==3) {
+      no_of_rows.attribute("disabled",""); 
+      createForm_two();
+      state=4;
+    }else if(state==4) {
+      for(let i=0;i<no_of_rows.value();i++) {
+        let temp = await loadData(i);
+        database.ref("lot_numbers/"+mat_made_form[i][0].value()).update({
+          quantity_made:temp+Number(mat_made_form[i][2].value())
+        });
+        database.ref("lot_numbers/"+mat_made_form[i][0].value()+"/design_numbers/").set({
+          [mat_made_form[i][1].value()]:[mat_made_form[i][3].value(),mat_made_form[i][4].value(),mat_made_form[i][2].value()]
+        });
+      }
+      for(let i=0;i<no_of_rows.value();i++) {
+        for(let j=0;j<5;j++) {
+          mat_made_form[i][j].hide();
+        }
+      }
+      mat_made_form=[];
+      no_of_rows.value(0);
+      set.position(625,70);
+      no_of_rows.removeAttribute("disabled");
+      state=0;
+    }
+  })
   
   no_of_rows = createInput("0","number");
-  no_of_rows.position(325,70);
+  no_of_rows.position(400,70);
 }
 
 function draw() {
@@ -59,48 +114,37 @@ function draw() {
   if(state==1) {
     no_of_rows.show();
     set.show();
-    text("Enter the of Fabric to be Added",20,87.5);
-    set.mouseReleased(()=>{
-      no_of_rows.attribute("disabled",""); 
-      createForm();
-      state=2;
-    })
+    text("Enter the number of Fabric to be Added",20,87.5);
   }
 
   if(state==2) {
-    text("Enter the of Fabric to be Added",20,87.5);
+    text("Enter the number of Fabric to be Added",20,87.5);
     text("Fabric",20,140);
     text("Lot Number",220,140);
     text("Colour Chart",420,140);
     text("Rate",620,140);
     text("Cut",820,140);
-    set.mouseReleased(()=>{
-      for(let i=0;i<no_of_rows.value();i++) {
-        let quantity = raw_mat_form[i][2].value().split(",").map(Number).reduce((sum, value) => sum + value, 0);
-        database.ref(raw_mat_form[i][1].value()).set({
-          fabric:raw_mat_form[i][0].value(),
-          colour_chart:raw_mat_form[i][2].value(),
-          rate:raw_mat_form[i][3].value(),
-          cut:raw_mat_form[i][4].value(),
-          quantity:quantity,
-          base_rate:quantity*raw_mat_form[i][3].value()
-        });
-      }
-      raw_mat_form=[];
-      no_of_rows.value(0);
-      set.position(525,70);
-      state=0;
-    })
   }
 
   if(state==3) {
-
+    no_of_rows.show();
+    set.show();
+    text("Enter the number of Fabric to be Added",20,87.5);
   }
 
   if(state==4) {
-
+    text("Enter the number of Fabric to be Added",20,87.5);
+    text("Lot Number",20,140);
+    text("Design Number",220,140)
+    text("Quantity",420,140);
+    text("Job Rate",620,140);
+    text("Packing Rate",820,140);
   }
 
+  // if(state==5) {
+  //   getCompleteTree();
+  //   state=6;
+  // }
 }
 
 function createForm() {
@@ -113,11 +157,6 @@ function createForm() {
     let colour_chart = createInput("0");
     let rate = createInput("0","number");
     let cut = createInput("0","number");
-    // fabric.hide();
-    // lot_number.hide();
-    // colour_chart.hide();
-    // rate.hide();
-    // cut.hide();
     arr.push(fabric);
     arr.push(lot_number);
     arr.push(colour_chart);
@@ -133,10 +172,70 @@ function createForm() {
     }
   }
 
+  set.position(450,150+count*50);
+}
+
+function createForm_two() {
+  let count = no_of_rows.value();
+  mat_made_form=[];
+  for(let i=0;i<count;i++) {
+    let arr=[];
+    let lot_number = createInput("0");
+    let design_number = createInput("0");
+    let quantity = createInput("0","number");
+    let job_rate = createInput("0","number");
+    let packing_rate = createInput("0","number");
+    
+    arr.push(lot_number);
+    arr.push(design_number);
+    arr.push(quantity);
+    arr.push(job_rate);
+    arr.push(packing_rate);
+    
+    mat_made_form.push(arr);
+  }
+
+  for(let i=0;i<count;i++) {
+    for(let j=0;j<5;j++) {
+      mat_made_form[i][j].position(20+j*200,150+i*50);
+    }
+  }
 
   set.position(450,150+count*50);
 }
 
-function createTextboxes() {
+async function loadData(a) {
+  let data = await database.ref("lot_numbers/"+mat_made_form[a][0].value() + "/quantity_made").once("value");
 
+  return Number(data.val()) || 0;
 }
+
+// async function getCompleteTree() {
+
+//   let snapshot = await database.ref("lot_numbers").once("value");
+
+//   function readTree(snapshot, level = 0) {
+
+//     let spaces = "  ".repeat(level);
+
+//     snapshot.forEach((child) => {
+
+//       if (child.hasChildren()) {
+
+//         console.log(spaces + child.key + ":");
+
+//         readTree(child, level + 1);
+
+//       } else {
+
+//         console.log(
+//           spaces + child.key + ": " + child.val()
+//         );
+
+//       }
+
+//     });
+//   }
+
+//   readTree(snapshot);
+// }
